@@ -472,6 +472,8 @@ glider -config CONFIG_PATH
 
 ## Customize Build
 
+OrayBox X1 (MIPS little-endian, soft-float): see [the dedicated Actions workflow and deployment guide](ORAY-X1.md).
+
 <details><summary>You can customize and build glider if you want a smaller binary (click to see details)</summary>
 
 

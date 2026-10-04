@@ -24,6 +24,20 @@ Actions Summary 报告真实大小。gzip 是下载压缩文件，运行前需�
 CI 用 QEMU 的 MIPS 24KEc 执行帮助、SOCKS5 TCP 和 SS AEAD 转发测试；
 真实 Oray 内核兼容性、UDP 和具体远端 VMess/SS 节点仍需设备上验证。
 
+### 已验证的产物大小
+
+[首次成功构建](https://github.com/yuliyang2023/glider/actions/runs/37201212234)
+对应源码提交 `6c2edbb`（glider 0.17.0）：
+
+| 版本 | 原始二进制 | gzip 下载文件 |
+| --- | --- | --- |
+| lite | 6,684,851 字节（6.38 MiB） | 2,253,965 字节（2.15 MiB） |
+| full | 8,388,787 字节（8.00 MiB） | 2,874,911 字节（2.74 MiB） |
+
+两版通过 QEMU MIPS 24KEc 的 SOCKS5 TCP 和 SS AEAD 转发测试。
+精简版已在 Oray 的 Linux 4.4.302 上执行并通过 SOCKS5 握手；本机测试监听的空闲 RSS 为
+5,016 KiB（约 4.90 MiB）。该数值不代表有流量时的内存上限，也不等于 `/tmp` 的文件占用。
+
 ## 在 Oray 上试运行
 
 该设备可写 Flash 不足 1 MB，先放到 `/tmp`（RAM）测试，不要直接覆盖现有 HEV。
