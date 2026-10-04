@@ -1,3 +1,5 @@
+//go:build !oray_lite
+
 package main
 
 import (
