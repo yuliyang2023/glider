@@ -45,6 +45,19 @@ full/lite 版额外验证 SS AEAD 转发，VMess 专用版验证 AEAD 客户端�
 精简版已在 Oray 的 Linux 4.4.302 上执行并通过 SOCKS5 握手；本机测试监听的空闲 RSS 为
 5,016 KiB（约 4.90 MiB）。该数值不代表有流量时的内存上限，也不等于 `/tmp` 的文件占用。
 
+[VMess 专用构建实测](https://github.com/yuliyang2023/glider/actions/runs/37201690066)
+对应源码提交 `b58316e`：
+
+| 版本 | 原始二进制 | gzip 下载文件 |
+| --- | --- | --- |
+| vmess（SOCKS5 + VMess TCP） | 6,029,491 字节（5.75 MiB） | 2,052,737 字节（1.96 MiB） |
+| vmess-tls（额外保留 TLS/WS/WSS） | 6,422,707 字节（6.13 MiB） | 2,184,478 字节（2.08 MiB） |
+
+纯 VMess TCP 版比 lite 少 640 KiB（约 9.8%）。删除代理协议注册并不会删除
+Glider 的 DNS、规则、健康检测和 Go 运行时；其中健康检测仍依赖 TLS 核心库。
+VMess 专用版本通过模拟器中的 SOCKS5 TCP 转发与 VMess AEAD 配置初始化测试，
+尚未连接真实远端 VMess 节点，也未替换 Oray 上已有的 lite 版。
+
 ## 在 Oray 上试运行
 
 该设备可写 Flash 不足 1 MB，先放到 `/tmp`（RAM）测试，不要直接覆盖现有 HEV。
