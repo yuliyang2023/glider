@@ -1,4 +1,5 @@
 """Run the target ELF in QEMU: SOCKS5 TCP forwarding and SS AEAD forwarding."""
+import argparse
 import contextlib
 import http.server
 import pathlib
@@ -61,7 +62,11 @@ class Handler(http.server.BaseHTTPRequestHandler):
         pass
 
 
-binary = str(pathlib.Path(sys.argv[1]).resolve())
+parser = argparse.ArgumentParser()
+parser.add_argument("binary")
+parser.add_argument("--vmess-only", action="store_true")
+args = parser.parse_args()
+binary = str(pathlib.Path(args.binary).resolve())
 server = http.server.ThreadingHTTPServer(("127.0.0.1", 0), Handler)
 threading.Thread(target=server.serve_forever, daemon=True).start()
 processes = []
@@ -89,15 +94,23 @@ with tempfile.TemporaryFile() as log:
         wait_ready(process, socks)
         request(socks, server.server_port)
         print("PASS: SOCKS5 TCP forwarding on MIPS 24KEc")
-        ss = free_port()
-        ss_url = f"ss://chacha20-ietf-poly1305:oray-smoke-test@127.0.0.1:{ss}"
-        process = start("-listen", ss_url, "-check", "disable")
-        wait_ready(process, ss)
-        chained = free_port()
-        process = start("-listen", f"socks5://127.0.0.1:{chained}", "-forward", ss_url, "-check", "disable")
-        wait_ready(process, chained)
-        request(chained, server.server_port)
-        print("PASS: SOCKS5 -> Shadowsocks AEAD -> HTTP on MIPS 24KEc")
+        if args.vmess_only:
+            vmess_port = free_port()
+            process = start("-listen", f"socks5://127.0.0.1:{vmess_port}",
+                            "-forward", "vmess://00000000-0000-4000-8000-000000000001@127.0.0.1:9?alterID=0",
+                            "-check", "disable")
+            wait_ready(process, vmess_port)
+            print("PASS: VMess AEAD client configuration initializes on MIPS 24KEc (no remote VMess test)")
+        else:
+            ss = free_port()
+            ss_url = f"ss://chacha20-ietf-poly1305:oray-smoke-test@127.0.0.1:{ss}"
+            process = start("-listen", ss_url, "-check", "disable")
+            wait_ready(process, ss)
+            chained = free_port()
+            process = start("-listen", f"socks5://127.0.0.1:{chained}", "-forward", ss_url, "-check", "disable")
+            wait_ready(process, chained)
+            request(chained, server.server_port)
+            print("PASS: SOCKS5 -> Shadowsocks AEAD -> HTTP on MIPS 24KEc")
     except Exception:
         log.seek(0)
         print(log.read().decode(errors="replace"), file=sys.stderr)

@@ -15,17 +15,19 @@ jobs:
         with:
           go-version: '1.24.13'
           cache: true
-      - name: Test default and lite registrations
+      - name: Test build profiles
         run: |
           go test ./...
           go test -tags oray_lite ./...
+          go test -tags oray_vmess ./...
+          go test -tags oray_vmess_tls ./...
 
   build:
     needs: test
     runs-on: ubuntu-24.04
     strategy:
       matrix:
-        profile: [full, lite]
+        profile: [full, lite, vmess, vmess-tls]
     env:
       CGO_ENABLED: '0'
       GOOS: linux
@@ -44,11 +46,15 @@ jobs:
           set -euo pipefail
           mkdir -p dist
           tags=()
-          if [[ '${{ matrix.profile }}' == lite ]]; then tags=(-tags oray_lite); fi
+          case '${{ matrix.profile }}' in
+            lite) tags=(-tags oray_lite) ;;
+            vmess) tags=(-tags oray_vmess) ;;
+            vmess-tls) tags=(-tags oray_vmess_tls) ;;
+          esac
           go build -trimpath -buildvcs=false "${tags[@]}" -ldflags='-s -w -buildid=' -o dist/glider-oray-x1-${{ matrix.profile }} .
           go version -m dist/glider-oray-x1-${{ matrix.profile }} > dist/BUILD-INFO.txt
           git rev-parse HEAD >> dist/BUILD-INFO.txt
-      - name: Verify ELF and run TCP/SS smoke tests on MIPS 24KEc
+      - name: Verify ELF and smoke tests on MIPS 24KEc
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y -qq qemu-user
@@ -56,7 +62,9 @@ jobs:
           readelf -h dist/glider-oray-x1-${{ matrix.profile }}
           if readelf -l dist/glider-oray-x1-${{ matrix.profile }} | grep -q INTERP; then exit 1; fi
           timeout 15 qemu-mipsel -cpu 24KEc dist/glider-oray-x1-${{ matrix.profile }} -h > dist/HELP.txt
-          python3 scripts/oray-smoke.py dist/glider-oray-x1-${{ matrix.profile }}
+          smoke_args=()
+          case '${{ matrix.profile }}' in vmess*) smoke_args=(--vmess-only) ;; esac
+          python3 scripts/oray-smoke.py dist/glider-oray-x1-${{ matrix.profile }} "${smoke_args[@]}"
       - name: Package and report sizes
         shell: bash
         run: |

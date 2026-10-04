@@ -7,21 +7,28 @@
 ## GitHub Actions
 
 打开本仓库的 Actions → **Build Oray X1** → **Run workflow**。
-工作流只允许手动触发，不发布 Docker 镜像。先测试源码，再生成两个 artifact：
+工作流只允许手动触发，不发布 Docker 镜像。先测试源码，再生成四个 artifact：
 
 | 文件 | 协议 |
 | --- | --- |
 | `glider-oray-x1-full` | 上游默认全部协议及 Linux 功能 |
 | `glider-oray-x1-lite` | HTTP、mixed、SOCKS5、SS、VMess、VLESS、Trojan、TLS、WS/WSS、reject |
+| `glider-oray-x1-vmess` | SOCKS5 入口 + VMess TCP 出口 |
+| `glider-oray-x1-vmess-tls` | SOCKS5 入口 + VMess + TLS、WS/WSS 传输 |
 
 精简版通过 `oray_lite` build tag 排除 KCP、SSH、SSR、smux、simple-obfs、
 SOCKS4、DHCP、redir/tproxy、unix/vsock 等注册模块；默认构建行为保持一致。
 DNS、规则和健康检测核心仍保留。协议支持以随包的 `HELP.txt` 和 `-scheme all` 为准。
 VMess 默认 `alterID=0` 使用 AEAD；SS2022、VLESS REALITY/XTLS 等扩展不在本构建承诺范围内。
 
+VMess 专用版本不含 SS、HTTP 代理入口、VLESS、Trojan 等协议注册。
+`vmess` 版不能连接要求 WS/TLS 的节点；此类节点应选 `vmess-tls`。
+Glider 的 DNS、规则和健康检测核心仍保留，因此专用版也包含 Go runtime 和核心功能依赖。
+
 每个 artifact 含原始二进制、`.gz`、`SHA256SUMS`、`BUILD-INFO.txt`、帮助、本文档及许可证。
 Actions Summary 报告真实大小。gzip 是下载压缩文件，运行前需要解压，空间应按原始文件计算。
-CI 用 QEMU 的 MIPS 24KEc 执行帮助、SOCKS5 TCP 和 SS AEAD 转发测试；
+CI 用 QEMU 的 MIPS 24KEc 执行帮助和 SOCKS5 TCP 转发测试；
+full/lite 版额外验证 SS AEAD 转发，VMess 专用版验证 AEAD 客户端配置初始化。
 真实 Oray 内核兼容性、UDP 和具体远端 VMess/SS 节点仍需设备上验证。
 
 ### 已验证的产物大小

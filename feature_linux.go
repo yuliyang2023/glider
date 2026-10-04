@@ -1,4 +1,4 @@
-//go:build !oray_lite
+//go:build !oray_lite && !oray_vmess && !oray_vmess_tls
 
 package main
 
