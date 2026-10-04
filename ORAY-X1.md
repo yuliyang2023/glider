@@ -46,7 +46,7 @@ forward=ss://chacha20-ietf-poly1305:YOUR_PASSWORD@SERVER:PORT
 # 或 VMess TCP：
 # forward=vmess://YOUR_UUID@SERVER:PORT?alterID=0
 # 或 VMess over TLS + WS：
-# forward=tls://SERVER:443,ws://@/PATH?host=SERVER,vmess://YOUR_UUID@?alterID=0
+# forward=tls://SERVER_IP:443?serverName=SERVER_NAME,ws://@/PATH?host=SERVER_NAME,vmess://YOUR_UUID@?alterID=0
 ```
 
 密码中 `@`、`:` 等 URL 特殊字符需要百分号编码。配置文件权限设置为 `600`，不要提交真实凭据。
@@ -73,6 +73,9 @@ Wi-Fi / 局域网客户端 → HEV tun0 → 127.0.0.1:1080 glider → SS / VMess
 ```
 
 Glider 是本机 SOCKS5 后端，HEV 和管理脚本继续负责 TUN、路由及 DNS。
+现有 HEV 管理脚本会拦截路由器的 DNS 并返回映射地址，因此 Glider 的远端服务器地址
+建议使用提前解析好的真实 IP；TLS 的 `serverName` 和 WS 的 `host` 则保留原域名。
+这样可避免 Glider 解析上游域名后连接 HEV 映射地址、再次进入本机代理形成循环。
 确认 Glider 代理可用后，再将 `/root/hev.yml` 的 SOCKS5 地址改为 `127.0.0.1`、端口 `1080`，
 本地无认证时删除用户名和密码字段；然后重启 HEV 管理脚本。
 Glider 配置使用自己的 URL 语法，不能直接粘贴所有客户端的 Base64 VMess 分享链接。

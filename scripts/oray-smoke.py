@@ -43,12 +43,17 @@ def request(port, target):
         response = b""
         while chunk := sock.recv(4096):
             response += chunk
+            # Glider may retain the client half of the relay until we close it.
+            # Validate the complete expected body rather than waiting for EOF.
+            if b"\r\n\r\n" in response and response.split(b"\r\n\r\n", 1)[1] == b"oray-smoke-ok":
+                break
         assert b"200 OK" in response and b"oray-smoke-ok" in response, response[:200]
 
 
 class Handler(http.server.BaseHTTPRequestHandler):
     def do_GET(self):
         self.send_response(200)
+        self.send_header("Content-Length", "13")
         self.end_headers()
         self.wfile.write(b"oray-smoke-ok")
 
